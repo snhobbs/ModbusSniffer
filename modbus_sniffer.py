@@ -18,10 +18,9 @@ class SerialSnooper:
         self.server_framer = ModbusRtuFramer(decoder=ServerDecoder())
 
     def __enter__(self):
-        self.open()
         return self
 
-    def __exit__(self):
+    def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
     def open(self):
@@ -46,6 +45,7 @@ class SerialSnooper:
                 print("Data: {}".format(msg.values), end=" ")
             except AttributeError:
                 pass
+        print('\n', end="")
 
     def read(self):
         b = self.connection.read_all()
@@ -66,11 +66,13 @@ if __name__ == "__main__":
         port = sys.argv[1]
     except IndexError:
         print("Usage: python3 modbus_snooper.py device [baudrate={}]".format(baud))
+        sys.exit(-1)
     try:
         baud = int(sys.argv[2])
     except (IndexError,ValueError):
         pass
     with SerialSnooper(port, baud) as ss:
         while True:
-            sleep(float(4)/ss.baud)
             response = ss.read()
+            sleep(float(4)/ss.baud)
+    sys.exit(0)
