@@ -53,12 +53,14 @@ class SerialSnooper:
             return
         try:
             self.client_framer.processIncomingPacket(b, self.packet_callback, unit=None, single=True)
-        except TypeError as e:
-            print(e)
+        except (IndexError, TypeError,KeyError) as e:
+            #print(e)
+            pass
         try:
             self.server_framer.processIncomingPacket(b, self.packet_callback, unit=None, single=True)
-        except TypeError as e:
-            print(e)
+        except (IndexError, TypeError,KeyError) as e:
+            #print(e)
+            pass
 
 if __name__ == "__main__":
     baud = 9600
