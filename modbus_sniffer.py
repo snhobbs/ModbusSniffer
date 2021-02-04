@@ -13,7 +13,7 @@ class SerialSnooper:
     def __init__(self, port, baud=9600):
         self.port = port
         self.baud = baud
-        self.connection = serial.Serial(port, baud)
+        self.connection = serial.Serial(port, baud, timeout=float(1024)/baud)
         self.client_framer = ModbusRtuFramer(decoder=ClientDecoder())
         self.server_framer = ModbusRtuFramer(decoder=ServerDecoder())
 
@@ -29,10 +29,11 @@ class SerialSnooper:
     def close(self):
         self.connection.close()
 
-    def packet_callback(self, *args, **kwargs):
+    def server_packet_callback(self, *args, **kwargs):
+        arg = 0
         for msg in args:
             func_name = str(type(msg)).split('.')[-1].strip("'><").replace("Request", "")
-            print("ID: {}, Function: {}: {}".format(msg.unit_id, func_name, msg.function_code), end=" ")
+            print("Master-> ID: {}, Function: {}: {}".format(msg.unit_id, func_name, msg.function_code), end=" ")
             try:
                 print("Address: {}".format(msg.address), end=" ")
             except AttributeError:
@@ -45,19 +46,43 @@ class SerialSnooper:
                 print("Data: {}".format(msg.values), end=" ")
             except AttributeError:
                 pass
-        print('\n', end="")
+            arg += 1
+            print('{}/{}\n'.format(arg, len(args)), end="")
+
+    def client_packet_callback(self, *args, **kwargs):
+        arg = 0
+        for msg in args:
+            func_name = str(type(msg)).split('.')[-1].strip("'><").replace("Request", "")
+            print("Slave-> ID: {}, Function: {}: {}".format(msg.unit_id, func_name, msg.function_code), end=" ")
+            try:
+                print("Address: {}".format(msg.address), end=" ")
+            except AttributeError:
+                pass
+            try:
+                print("Count: {}".format(msg.count), end=" ")
+            except AttributeError:
+                pass
+            try:
+                print("Data: {}".format(msg.values), end=" ")
+            except AttributeError:
+                pass
+            arg += 1
+            print('{}/{}\n'.format(arg, len(args)), end="")
 
     def read(self):
-        b = self.connection.read_all()
+        b = self.connection.read(16)
         if len(b) == 0:
             return
         try:
-            self.client_framer.processIncomingPacket(b, self.packet_callback, unit=None, single=True)
+            self.client_framer.processIncomingPacket(b, self.client_packet_callback, unit=None, single=True)
+            #print("Check Client")
         except (IndexError, TypeError,KeyError) as e:
             #print(e)
             pass
         try:
-            self.server_framer.processIncomingPacket(b, self.packet_callback, unit=None, single=True)
+            self.server_framer.processIncomingPacket(b, self.server_packet_callback, unit=None, single=True)
+            #print("Check Server")
+            pass
         except (IndexError, TypeError,KeyError) as e:
             #print(e)
             pass
@@ -67,7 +92,7 @@ if __name__ == "__main__":
     try:
         port = sys.argv[1]
     except IndexError:
-        print("Usage: python3 modbus_snooper.py device [baudrate={}]".format(baud))
+        print("Usage: python3 modbus_snooper.py device [baudrate, default={}]".format(baud))
         sys.exit(-1)
     try:
         baud = int(sys.argv[2])
@@ -76,5 +101,5 @@ if __name__ == "__main__":
     with SerialSnooper(port, baud) as ss:
         while True:
             response = ss.read()
-            sleep(float(4)/ss.baud)
+            #sleep(float(1)/ss.baud)
     sys.exit(0)
