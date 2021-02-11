@@ -13,7 +13,7 @@ class SerialSnooper:
     def __init__(self, port, baud=9600):
         self.port = port
         self.baud = baud
-        self.connection = serial.Serial(port, baud, timeout=float(1024)/baud)
+        self.connection = serial.Serial(port, baud, timeout=float(128*10)/baud)
         self.client_framer = ModbusRtuFramer(decoder=ClientDecoder())
         self.server_framer = ModbusRtuFramer(decoder=ServerDecoder())
 
@@ -92,7 +92,7 @@ if __name__ == "__main__":
     try:
         port = sys.argv[1]
     except IndexError:
-        print("Usage: python3 modbus_snooper.py device [baudrate, default={}]".format(baud))
+        print("Usage: python3 {} device [baudrate, default={}]".format(sys.argv[0], baud))
         sys.exit(-1)
     try:
         baud = int(sys.argv[2])
