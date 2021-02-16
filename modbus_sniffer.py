@@ -8,12 +8,22 @@ from pymodbus.transaction import ModbusRtuFramer
 #from binascii import b2a_hex
 from time import sleep
 import sys
+import logging
+FORMAT = ('%(asctime)-15s %(threadName)-15s'
+          ' %(levelname)-8s %(module)-15s:%(lineno)-8s %(message)s')
+logging.basicConfig(format=FORMAT)
+log = logging.getLogger()
+log.setLevel(logging.DEBUG)
+#log.setLevel(logging.WARNING)
+#log.setLevel(logging.INFO)
 
 class SerialSnooper:
+    kMaxReadSize = 128
+    kByteLength = 10
     def __init__(self, port, baud=9600):
         self.port = port
         self.baud = baud
-        self.connection = serial.Serial(port, baud, timeout=float(128*10)/baud)
+        self.connection = serial.Serial(port, baud, timeout=float(self.kByteLength*self.kMaxReadSize)/baud)
         self.client_framer = ModbusRtuFramer(decoder=ClientDecoder())
         self.server_framer = ModbusRtuFramer(decoder=ServerDecoder())
 
@@ -69,23 +79,28 @@ class SerialSnooper:
             arg += 1
             print('{}/{}\n'.format(arg, len(args)), end="")
 
-    def read(self):
-        b = self.connection.read(16)
-        if len(b) == 0:
+    def read_raw(self, n=16):
+        return self.connection.read(n)
+
+    def process(self, data):
+        if len(data) <= 0:
             return
         try:
-            self.client_framer.processIncomingPacket(b, self.client_packet_callback, unit=None, single=True)
-            #print("Check Client")
+            print("Check Client")
+            self.client_framer.processIncomingPacket(data, self.client_packet_callback, unit=None, single=True)
         except (IndexError, TypeError,KeyError) as e:
             #print(e)
             pass
         try:
-            self.server_framer.processIncomingPacket(b, self.server_packet_callback, unit=None, single=True)
-            #print("Check Server")
+            print("Check Server")
+            self.server_framer.processIncomingPacket(data, self.server_packet_callback, unit=None, single=True)
             pass
         except (IndexError, TypeError,KeyError) as e:
             #print(e)
             pass
+
+    def read(self):
+        self.process(self.read_raw())
 
 if __name__ == "__main__":
     baud = 9600
@@ -100,6 +115,9 @@ if __name__ == "__main__":
         pass
     with SerialSnooper(port, baud) as ss:
         while True:
-            response = ss.read()
+            data = ss.read_raw()
+            if len(data):
+                print(data)
+            response = ss.process(data)
             #sleep(float(1)/ss.baud)
     sys.exit(0)
