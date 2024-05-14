@@ -1,44 +1,50 @@
+import copy
 import serial
-from pymodbus.factory import ClientDecoder
-from pymodbus.factory import ServerDecoder
-#import pymodbus
-#from pymodbus.transaction import ModbusRtuFramer
-#from pymodbus.utilities import hexlify_packets
-#from binascii import b2a_hex
-from time import sleep
+from multiprocessing import Process
+
+# import pymodbus
+# from pymodbus.transaction import ModbusRtuFramer
+# from pymodbus.utilities import hexlify_packets
+# from binascii import b2a_hex
 import sys
-from pymodbus.device import ModbusDeviceIdentification
 from pymodbus.datastore import ModbusSequentialDataBlock
 from pymodbus.datastore import ModbusSlaveContext, ModbusServerContext
 from pymodbus.transaction import ModbusRtuFramer
-#from custom_message import CustomModbusRequest
-#import socat_test as socat
+
+# from custom_message import CustomModbusRequest
+# import socat_test as socat
 import logging
 from pymodbus.server.sync import StartSerialServer
 from modbus_sniffer import SerialSnooper
-#asynchronous import StartSerialServer
-FORMAT = ('%(asctime)-15s %(threadName)-15s'
-          ' %(levelname)-8s %(module)-15s:%(lineno)-8s %(message)s')
+
+# asynchronous import StartSerialServer
+FORMAT = (
+    "%(asctime)-15s %(threadName)-15s"
+    " %(levelname)-8s %(module)-15s:%(lineno)-8s %(message)s"
+)
 logging.basicConfig(format=FORMAT)
 log = logging.getLogger()
 log.setLevel(logging.DEBUG)
-#log.setLevel(logging.INFO)
-#log.setLevel(logging.WARNING)
-import copy
+# log.setLevel(logging.INFO)
+# log.setLevel(logging.WARNING)
+
 
 def run_server(device, baud=9600):
     store = ModbusSlaveContext(
-        di=ModbusSequentialDataBlock(0, [17]*100),
-        co=ModbusSequentialDataBlock(0, [17]*100),
-        hr=ModbusSequentialDataBlock(0, [25185]*1024),
-        ir=ModbusSequentialDataBlock(0, [25185]*1024))
-    slaves = {1 : copy.deepcopy(store),
-              2 : copy.deepcopy(store),
-              3 : copy.deepcopy(store),
-              4 : copy.deepcopy(store),
-              5 : copy.deepcopy(store),
-              6 : copy.deepcopy(store),
-              246 : copy.deepcopy(store)}
+        di=ModbusSequentialDataBlock(0, [17] * 100),
+        co=ModbusSequentialDataBlock(0, [17] * 100),
+        hr=ModbusSequentialDataBlock(0, [25185] * 1024),
+        ir=ModbusSequentialDataBlock(0, [25185] * 1024),
+    )
+    slaves = {
+        1: copy.deepcopy(store),
+        2: copy.deepcopy(store),
+        3: copy.deepcopy(store),
+        4: copy.deepcopy(store),
+        5: copy.deepcopy(store),
+        6: copy.deepcopy(store),
+        246: copy.deepcopy(store),
+    }
     context = ModbusServerContext(
         slaves=slaves,
         single=False,
@@ -51,28 +57,30 @@ def run_server(device, baud=9600):
         port=device,
         framer=ModbusRtuFramer,
         stopbits=1,
-        timeout=3.5*10/baud,
+        timeout=3.5 * 10 / baud,
         bytesize=8,
         parity=serial.PARITY_NONE,
-        baudrate=baud)
+        baudrate=baud,
+    )
 
-from threading import Thread
-from multiprocessing import Process, Queue
-from queue import Empty
+
 def read_to_queue(s, q):
     while True:
         q.put(s.read(1))
+
 
 if __name__ == "__main__":
     baud = 9600
     try:
         port = sys.argv[1]
     except IndexError:
-        print("Usage: python3 {} device [baudrate, default={}]".format(sys.argv[0], baud))
+        print(
+            "Usage: python3 {} device [baudrate, default={}]".format(sys.argv[0], baud)
+        )
         sys.exit(-1)
     try:
         baud = int(sys.argv[2])
-    except (IndexError,ValueError):
+    except (IndexError, ValueError):
         pass
 
     server = Process(target=run_server, args=("/tmp/ttyp0", baud))
@@ -84,16 +92,18 @@ if __name__ == "__main__":
             master_data = bytes()
             slave_data = bytes()
 
-            slave_data += slave_sniffer.connection.read(slave_sniffer.connection.in_waiting)  # read response from slave server
-            master_sniffer.connection.write(slave_data) # send slave response to master
+            slave_data += slave_sniffer.connection.read(
+                slave_sniffer.connection.in_waiting
+            )  # read response from slave server
+            master_sniffer.connection.write(slave_data)  # send slave response to master
 
-            master_data += master_sniffer.connection.read(master_sniffer.connection.in_waiting)  # read data from usb
-            slave_sniffer.connection.write(master_data) # connect data to slave
+            master_data += master_sniffer.connection.read(
+                master_sniffer.connection.in_waiting
+            )  # read data from usb
+            slave_sniffer.connection.write(master_data)  # connect data to slave
 
-            slave_sniffer.process(slave_data) # read slave packet
-            master_sniffer.process(master_data) # read master packet
+            slave_sniffer.process(slave_data)  # read slave packet
+            master_sniffer.process(master_data)  # read master packet
     finally:
         master_sniffer.close()
         slave_sniffer.close()
-
-

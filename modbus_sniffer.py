@@ -2,28 +2,35 @@ import serial
 from pymodbus.factory import ClientDecoder
 from pymodbus.factory import ServerDecoder
 from pymodbus.transaction import ModbusRtuFramer
-#import pymodbus
-#from pymodbus.transaction import ModbusRtuFramer
-#from pymodbus.utilities import hexlify_packets
-#from binascii import b2a_hex
-from time import sleep
+
+# import pymodbus
+# from pymodbus.transaction import ModbusRtuFramer
+# from pymodbus.utilities import hexlify_packets
+# from binascii import b2a_hex
 import sys
 import logging
-FORMAT = ('%(asctime)-15s %(threadName)-15s'
-          ' %(levelname)-8s %(module)-15s:%(lineno)-8s %(message)s')
+
+FORMAT = (
+    "%(asctime)-15s %(threadName)-15s"
+    " %(levelname)-8s %(module)-15s:%(lineno)-8s %(message)s"
+)
 logging.basicConfig(format=FORMAT)
 log = logging.getLogger()
 log.setLevel(logging.DEBUG)
-#log.setLevel(logging.WARNING)
-#log.setLevel(logging.INFO)
+# log.setLevel(logging.WARNING)
+# log.setLevel(logging.INFO)
+
 
 class SerialSnooper:
     kMaxReadSize = 128
     kByteLength = 10
+
     def __init__(self, port, baud=9600):
         self.port = port
         self.baud = baud
-        self.connection = serial.Serial(port, baud, timeout=float(self.kByteLength*self.kMaxReadSize)/baud)
+        self.connection = serial.Serial(
+            port, baud, timeout=float(self.kByteLength * self.kMaxReadSize) / baud
+        )
         self.client_framer = ModbusRtuFramer(decoder=ClientDecoder())
         self.server_framer = ModbusRtuFramer(decoder=ServerDecoder())
 
@@ -42,8 +49,15 @@ class SerialSnooper:
     def server_packet_callback(self, *args, **kwargs):
         arg = 0
         for msg in args:
-            func_name = str(type(msg)).split('.')[-1].strip("'><").replace("Request", "")
-            print("Master-> ID: {}, Function: {}: {}".format(msg.unit_id, func_name, msg.function_code), end=" ")
+            func_name = (
+                str(type(msg)).split(".")[-1].strip("'><").replace("Request", "")
+            )
+            print(
+                "Master-> ID: {}, Function: {}: {}".format(
+                    msg.unit_id, func_name, msg.function_code
+                ),
+                end=" ",
+            )
             try:
                 print("Address: {}".format(msg.address), end=" ")
             except AttributeError:
@@ -57,13 +71,20 @@ class SerialSnooper:
             except AttributeError:
                 pass
             arg += 1
-            print('{}/{}\n'.format(arg, len(args)), end="")
+            print("{}/{}\n".format(arg, len(args)), end="")
 
     def client_packet_callback(self, *args, **kwargs):
         arg = 0
         for msg in args:
-            func_name = str(type(msg)).split('.')[-1].strip("'><").replace("Request", "")
-            print("Slave-> ID: {}, Function: {}: {}".format(msg.unit_id, func_name, msg.function_code), end=" ")
+            func_name = (
+                str(type(msg)).split(".")[-1].strip("'><").replace("Request", "")
+            )
+            print(
+                "Slave-> ID: {}, Function: {}: {}".format(
+                    msg.unit_id, func_name, msg.function_code
+                ),
+                end=" ",
+            )
             try:
                 print("Address: {}".format(msg.address), end=" ")
             except AttributeError:
@@ -77,7 +98,7 @@ class SerialSnooper:
             except AttributeError:
                 pass
             arg += 1
-            print('{}/{}\n'.format(arg, len(args)), end="")
+            print("{}/{}\n".format(arg, len(args)), end="")
 
     def read_raw(self, n=16):
         return self.connection.read(n)
@@ -87,31 +108,38 @@ class SerialSnooper:
             return
         try:
             print("Check Client")
-            self.client_framer.processIncomingPacket(data, self.client_packet_callback, unit=None, single=True)
-        except (IndexError, TypeError,KeyError) as e:
-            #print(e)
+            self.client_framer.processIncomingPacket(
+                data, self.client_packet_callback, unit=None, single=True
+            )
+        except (IndexError, TypeError, KeyError):
+            # print(e)
             pass
         try:
             print("Check Server")
-            self.server_framer.processIncomingPacket(data, self.server_packet_callback, unit=None, single=True)
+            self.server_framer.processIncomingPacket(
+                data, self.server_packet_callback, unit=None, single=True
+            )
             pass
-        except (IndexError, TypeError,KeyError) as e:
-            #print(e)
+        except (IndexError, TypeError, KeyError):
+            # print(e)
             pass
 
     def read(self):
         self.process(self.read_raw())
+
 
 if __name__ == "__main__":
     baud = 9600
     try:
         port = sys.argv[1]
     except IndexError:
-        print("Usage: python3 {} device [baudrate, default={}]".format(sys.argv[0], baud))
+        print(
+            "Usage: python3 {} device [baudrate, default={}]".format(sys.argv[0], baud)
+        )
         sys.exit(-1)
     try:
         baud = int(sys.argv[2])
-    except (IndexError,ValueError):
+    except (IndexError, ValueError):
         pass
     with SerialSnooper(port, baud) as ss:
         while True:
@@ -119,5 +147,5 @@ if __name__ == "__main__":
             if len(data):
                 print(data)
             response = ss.process(data)
-            #sleep(float(1)/ss.baud)
+            # sleep(float(1)/ss.baud)
     sys.exit(0)
