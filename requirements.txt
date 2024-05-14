@@ -1,2 +1,4 @@
-pymodbus
+click>=7.0
 pyserial
+pymodbus
+

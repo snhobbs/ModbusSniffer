@@ -2,12 +2,7 @@ import serial
 from pymodbus.factory import ClientDecoder
 from pymodbus.factory import ServerDecoder
 from pymodbus.transaction import ModbusRtuFramer
-
-# import pymodbus
-# from pymodbus.transaction import ModbusRtuFramer
-# from pymodbus.utilities import hexlify_packets
-# from binascii import b2a_hex
-import sys
+import click
 import logging
 
 FORMAT = (
@@ -25,12 +20,13 @@ class SerialSnooper:
     kMaxReadSize = 128
     kByteLength = 10
 
-    def __init__(self, port, baud=9600):
+    def __init__(self, port, baud=9600, timeout=None):
         self.port = port
         self.baud = baud
-        self.connection = serial.Serial(
-            port, baud, timeout=float(self.kByteLength * self.kMaxReadSize) / baud
-        )
+        if timeout is None:
+            timeout = float(9 * self.kByteLength) / baud
+        self.timeout = timeout
+        self.connection = serial.Serial(port, baud, timeout=timeout)
         self.client_framer = ModbusRtuFramer(decoder=ClientDecoder())
         self.server_framer = ModbusRtuFramer(decoder=ServerDecoder())
 
@@ -128,24 +124,24 @@ class SerialSnooper:
         self.process(self.read_raw())
 
 
-if __name__ == "__main__":
-    baud = 9600
-    try:
-        port = sys.argv[1]
-    except IndexError:
-        print(
-            "Usage: python3 {} device [baudrate, default={}]".format(sys.argv[0], baud)
-        )
-        sys.exit(-1)
-    try:
-        baud = int(sys.argv[2])
-    except (IndexError, ValueError):
-        pass
-    with SerialSnooper(port, baud) as ss:
+@click.command()
+@click.option("--port", "-p", default="/dev/ttyUSB0", help="Serial device")
+@click.option("--baud", "-b", type=int, default=9600)
+@click.option("--debug", is_flag=True, help="Debug level verbosity")
+@click.option("--timeout", type=float, help="Modbus timeout")
+def main(port, baud, debug, timeout):
+    if debug:
+        logging.getLogger().setLevel(logging.DEBUG)
+    else:
+        logging.getLogger().setLevel(logging.INFO)
+
+    with SerialSnooper(port, baud, timeout) as ss:
         while True:
             data = ss.read_raw()
             if len(data):
                 print(data)
-            response = ss.process(data)
-            # sleep(float(1)/ss.baud)
-    sys.exit(0)
+            _ = ss.process(data)
+
+
+if __name__ == "__main__":
+    main()
