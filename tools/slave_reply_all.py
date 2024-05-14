@@ -1,21 +1,24 @@
+import contextlib
 import copy
-import serial
+
+# asynchronous import StartSerialServer
+import logging
 
 # import pymodbus
 # from pymodbus.transaction import ModbusRtuFramer
 # from pymodbus.utilities import hexlify_packets
 # from binascii import b2a_hex
 import sys
+
+import serial
 from pymodbus.datastore import ModbusSequentialDataBlock
-from pymodbus.datastore import ModbusSlaveContext, ModbusServerContext
-from pymodbus.transaction import ModbusRtuFramer
+from pymodbus.datastore import ModbusServerContext
+from pymodbus.datastore import ModbusSlaveContext
 
 # from custom_message import CustomModbusRequest
 # import socat_test as socat
 from pymodbus.server.sync import StartSerialServer
-
-# asynchronous import StartSerialServer
-import logging
+from pymodbus.transaction import ModbusRtuFramer
 
 FORMAT = (
     "%(asctime)-15s %(threadName)-15s"
@@ -48,7 +51,6 @@ fv = "2.0.1"
 input_reg = [0] * 1024
 input_reg = write_to_reg(33, input_reg, fv)
 input_reg = write_to_reg(1, input_reg, version)
-print(input_reg, len(input_reg))
 
 
 def run_server(device, baud=9600):
@@ -91,13 +93,8 @@ if __name__ == "__main__":
     try:
         port = sys.argv[1]
     except IndexError:
-        print(
-            "Usage: python3 {} device [baudrate, default={}]".format(sys.argv[0], baud)
-        )
         sys.exit(-1)
-    try:
+    with contextlib.suppress(IndexError, ValueError):
         baud = int(sys.argv[2])
-    except (IndexError, ValueError):
-        pass
 
     run_server(device=port, baud=baud)

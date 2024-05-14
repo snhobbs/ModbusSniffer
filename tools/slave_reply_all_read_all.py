@@ -1,20 +1,24 @@
+import contextlib
 import copy
-import serial
-from multiprocessing import Process
+
+# from custom_message import CustomModbusRequest
+# import socat_test as socat
+import logging
 
 # import pymodbus
 # from pymodbus.transaction import ModbusRtuFramer
 # from pymodbus.utilities import hexlify_packets
 # from binascii import b2a_hex
 import sys
+from multiprocessing import Process
+
+import serial
 from pymodbus.datastore import ModbusSequentialDataBlock
-from pymodbus.datastore import ModbusSlaveContext, ModbusServerContext
+from pymodbus.datastore import ModbusServerContext
+from pymodbus.datastore import ModbusSlaveContext
+from pymodbus.server.sync import StartSerialServer
 from pymodbus.transaction import ModbusRtuFramer
 
-# from custom_message import CustomModbusRequest
-# import socat_test as socat
-import logging
-from pymodbus.server.sync import StartSerialServer
 from modbus_sniffer import SerialSnooper
 
 # asynchronous import StartSerialServer
@@ -74,14 +78,9 @@ if __name__ == "__main__":
     try:
         port = sys.argv[1]
     except IndexError:
-        print(
-            "Usage: python3 {} device [baudrate, default={}]".format(sys.argv[0], baud)
-        )
         sys.exit(-1)
-    try:
+    with contextlib.suppress(IndexError, ValueError):
         baud = int(sys.argv[2])
-    except (IndexError, ValueError):
-        pass
 
     server = Process(target=run_server, args=("/tmp/ttyp0", baud))
     server.start()
@@ -89,8 +88,8 @@ if __name__ == "__main__":
         master_sniffer = SerialSnooper(port, baud)
         slave_sniffer = SerialSnooper("/tmp/ptyp0", baud)
         while True:
-            master_data = bytes()
-            slave_data = bytes()
+            master_data = b""
+            slave_data = b""
 
             slave_data += slave_sniffer.connection.read(
                 slave_sniffer.connection.in_waiting

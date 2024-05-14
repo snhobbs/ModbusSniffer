@@ -1,9 +1,11 @@
+import contextlib
+import logging
+
+import click
 import serial
 from pymodbus.factory import ClientDecoder
 from pymodbus.factory import ServerDecoder
 from pymodbus.transaction import ModbusRtuFramer
-import click
-import logging
 
 FORMAT = (
     "%(asctime)-15s %(threadName)-15s"
@@ -43,58 +45,24 @@ class SerialSnooper:
         self.connection.close()
 
     def server_packet_callback(self, *args, **kwargs):
-        arg = 0
         for msg in args:
-            func_name = (
-                str(type(msg)).split(".")[-1].strip("'><").replace("Request", "")
-            )
-            print(
-                "Master-> ID: {}, Function: {}: {}".format(
-                    msg.unit_id, func_name, msg.function_code
-                ),
-                end=" ",
-            )
-            try:
-                print("Address: {}".format(msg.address), end=" ")
-            except AttributeError:
+            (str(type(msg)).split(".")[-1].strip("'><").replace("Request", ""))
+            with contextlib.suppress(AttributeError):
                 pass
-            try:
-                print("Count: {}".format(msg.count), end=" ")
-            except AttributeError:
+            with contextlib.suppress(AttributeError):
                 pass
-            try:
-                print("Data: {}".format(msg.values), end=" ")
-            except AttributeError:
+            with contextlib.suppress(AttributeError):
                 pass
-            arg += 1
-            print("{}/{}\n".format(arg, len(args)), end="")
 
     def client_packet_callback(self, *args, **kwargs):
-        arg = 0
         for msg in args:
-            func_name = (
-                str(type(msg)).split(".")[-1].strip("'><").replace("Request", "")
-            )
-            print(
-                "Slave-> ID: {}, Function: {}: {}".format(
-                    msg.unit_id, func_name, msg.function_code
-                ),
-                end=" ",
-            )
-            try:
-                print("Address: {}".format(msg.address), end=" ")
-            except AttributeError:
+            (str(type(msg)).split(".")[-1].strip("'><").replace("Request", ""))
+            with contextlib.suppress(AttributeError):
                 pass
-            try:
-                print("Count: {}".format(msg.count), end=" ")
-            except AttributeError:
+            with contextlib.suppress(AttributeError):
                 pass
-            try:
-                print("Data: {}".format(msg.values), end=" ")
-            except AttributeError:
+            with contextlib.suppress(AttributeError):
                 pass
-            arg += 1
-            print("{}/{}\n".format(arg, len(args)), end="")
 
     def read_raw(self, n=16):
         return self.connection.read(n)
@@ -102,23 +70,14 @@ class SerialSnooper:
     def process(self, data):
         if len(data) <= 0:
             return
-        try:
-            print("Check Client")
+        with contextlib.suppress(IndexError, TypeError, KeyError):
             self.client_framer.processIncomingPacket(
                 data, self.client_packet_callback, unit=None, single=True
             )
-        except (IndexError, TypeError, KeyError):
-            # print(e)
-            pass
-        try:
-            print("Check Server")
+        with contextlib.suppress(IndexError, TypeError, KeyError):
             self.server_framer.processIncomingPacket(
                 data, self.server_packet_callback, unit=None, single=True
             )
-            pass
-        except (IndexError, TypeError, KeyError):
-            # print(e)
-            pass
 
     def read(self):
         self.process(self.read_raw())
@@ -139,7 +98,7 @@ def main(port, baud, debug, timeout):
         while True:
             data = ss.read_raw()
             if len(data):
-                print(data)
+                pass
             _ = ss.process(data)
 
 

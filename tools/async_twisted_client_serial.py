@@ -7,13 +7,13 @@ The following is an example of how to use the asynchronous serial modbus
 client implementation from pymodbus with twisted.
 """
 
-from twisted.internet import reactor
+import logging
+import sys
+
 from pymodbus.client.asynchronous import schedulers
 from pymodbus.client.asynchronous.serial import AsyncModbusSerialClient
 from pymodbus.client.asynchronous.twisted import ModbusClientProtocol
-
-import logging
-import sys
+from twisted.internet import reactor
 
 logging.basicConfig()
 log = logging.getLogger("pymodbus")
@@ -61,7 +61,6 @@ class ExampleProtocol(ModbusClientProtocol):
 
         :param response: The response to process
         """
-        print(response)
         log.info(response.getBit(0))
         log.info(response.getBit(1))
         log.info(response.getBit(2))

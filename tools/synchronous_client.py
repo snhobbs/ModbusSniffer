@@ -19,13 +19,13 @@ the guard construct that is available in python 2.5 and up::
 # --------------------------------------------------------------------------- #
 # from pymodbus.client.sync import ModbusTcpClient as ModbusClient
 # from pymodbus.client.sync import ModbusUdpClient as ModbusClient
-from pymodbus.client.sync import ModbusSerialClient as ModbusClient
-
 # --------------------------------------------------------------------------- #
 # configure the client logging
 # --------------------------------------------------------------------------- #
 import logging
 import sys
+
+from pymodbus.client.sync import ModbusSerialClient as ModbusClient
 
 FORMAT = (
     "%(asctime)-15s %(threadName)-15s "
@@ -135,20 +135,23 @@ def run_sync_client():
     rr = client.read_discrete_inputs(0, 8, unit=UNIT)
     assert not rq.isError()  # test that we are not an error
 
+    value = 10
     log.debug("Write to a holding register and read back")
-    rq = client.write_register(1, 10, unit=UNIT)
+    rq = client.write_register(1, value, unit=UNIT)
     rr = client.read_holding_registers(1, 1, unit=UNIT)
     assert not rq.isError()  # test that we are not an error
-    assert rr.registers[0] == 10  # test the expected value
+    assert rr.registers[0] == value  # test the expected value
 
+    registers = 8
+    value = [10] * registers
     log.debug("Write to multiple holding registers and read back")
-    rq = client.write_registers(1, [10] * 8, unit=UNIT)
-    rr = client.read_holding_registers(1, 8, unit=UNIT)
+    rq = client.write_registers(1, value, unit=UNIT)
+    rr = client.read_holding_registers(1, registers, unit=UNIT)
     assert not rq.isError()  # test that we are not an error
-    assert rr.registers == [10] * 8  # test the expected value
+    assert rr.registers == value  # test the expected value
 
     log.debug("Read input registers")
-    rr = client.read_input_registers(1, 8, unit=UNIT)
+    rr = client.read_input_registers(1, registers, unit=UNIT)
     assert not rq.isError()  # test that we are not an error
 
     arguments = {
