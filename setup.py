@@ -26,6 +26,6 @@ setup(name='modbus_sniffer',
       ],
       test_suite='nose.collector',
       tests_require=['nose'],
-      scripts=["bin/modbus_sniffer.py"],
+      scripts=["modbus_sniffer.py"],
       include_package_data=True,
       zip_safe=True)
