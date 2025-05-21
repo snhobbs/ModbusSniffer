@@ -1,22 +1,11 @@
 import contextlib
 import logging
-
-import click
 import serial
 from pymodbus.factory import ClientDecoder
 from pymodbus.factory import ServerDecoder
 from pymodbus.transaction import ModbusRtuFramer
 
-FORMAT = (
-    "%(asctime)-15s %(threadName)-15s"
-    " %(levelname)-8s %(module)-15s:%(lineno)-8s %(message)s"
-)
-logging.basicConfig(format=FORMAT)
-log = logging.getLogger()
-log.setLevel(logging.DEBUG)
-# log.setLevel(logging.WARNING)
-# log.setLevel(logging.INFO)
-
+_log = logging.getLogger("modbus-sniffer")
 
 class SerialSnooper:
     kMaxReadSize = 128
@@ -82,25 +71,3 @@ class SerialSnooper:
     def read(self):
         self.process(self.read_raw())
 
-
-@click.command()
-@click.option("--port", "-p", default="/dev/ttyUSB0", help="Serial device")
-@click.option("--baud", "-b", type=int, default=9600)
-@click.option("--debug", is_flag=True, help="Debug level verbosity")
-@click.option("--timeout", type=float, help="Modbus timeout")
-def main(port, baud, debug, timeout):
-    if debug:
-        logging.getLogger().setLevel(logging.DEBUG)
-    else:
-        logging.getLogger().setLevel(logging.INFO)
-
-    with SerialSnooper(port, baud, timeout) as ss:
-        while True:
-            data = ss.read_raw()
-            if len(data):
-                pass
-            _ = ss.process(data)
-
-
-if __name__ == "__main__":
-    main()

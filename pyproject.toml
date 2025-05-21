@@ -13,6 +13,11 @@ classifiers=[
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
+        'Programming Language :: Python :: 3.13',
 ]
 description="Pymodbus based modbus rtu packet sniffer"
 keywords=['modbus_sniffer']
@@ -20,7 +25,7 @@ readme="README.md"
 dynamic = ["dependencies"]
 
 [project.scripts]
-modbus_sniffer='modbus_sniffer:main'
+modbus_sniffer='modbus_sniffer.cli:main'
 
 [project.urls]
 github='https://github.com/snhobbs/ModbusSniffer'
@@ -47,27 +52,15 @@ python_files = [
 [tool.coverage.run]
 include = ["modbus_sniffer/**"]
 omit = ["*/migrations/*", "*/tests/*"]
-plugins = ["django_coverage_plugin"]
 
 # ==== mypy ====
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 check_untyped_defs = true
 ignore_missing_imports = true
 warn_unused_ignores = true
 warn_redundant_casts = true
 warn_unused_configs = true
-plugins = [
-    "mypy_django_plugin.main",
-]
-
-[[tool.mypy.overrides]]
-# Django migrations should not produce any errors:
-module = "*.migrations.*"
-ignore_errors = true
-
-[tool.django-stubs]
-django_settings_module = "config.settings.test"
 
 # ==== djLint ====
 [tool.djlint]
@@ -115,10 +108,9 @@ exclude = [
     "*/migrations/*.py",
     "staticfiles/*"
 ]
-# Same as Django: https://github.com/cookiecutter/cookiecutter-django/issues/4792.
 line-length = 88
 indent-width = 4
-target-version = "py311"
+target-version = "py312"
 
 [tool.ruff.lint]
 select = [
