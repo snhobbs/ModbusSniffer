@@ -25,12 +25,14 @@ pip install .
 ## Usage
 **Terminal output only**
 ```bash
-python modbus_sniffer.py --port /dev/ttyUSB0 --baud 9600
+modbus_sniffer --port /dev/ttyUSB0 --baud 9600
+python3 modbus_sniffer.py --port /dev/ttyUSB0 --baud 9600
 ```
 
 **With logfile output**
 ```bash
-python modbus_sniffer.py --port /dev/ttyUSB0 --baud 19200 --logfile modbus.log
+modbus_sniffer --port /dev/ttyUSB0 --baud 19200 --logfile modbus.log
+python3 modbus_sniffer.py --port /dev/ttyUSB0 --baud 19200 --logfile modbus.log
 ```
 
 | Option       | Description                                   |
