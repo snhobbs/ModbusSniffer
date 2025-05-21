@@ -26,6 +26,7 @@ dynamic = ["dependencies"]
 
 [project.scripts]
 modbus_sniffer='modbus_sniffer.cli:main'
+modbus-sniffer-gui='modbus_sniffer.gui:main'
 
 [project.urls]
 github='https://github.com/snhobbs/ModbusSniffer'
