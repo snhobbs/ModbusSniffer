@@ -20,7 +20,7 @@ readme="README.md"
 dynamic = ["dependencies"]
 
 [project.scripts]
-modbus_sniffer='modbus_sniffer:main'
+modbus_sniffer='modbus_sniffer.modbus_sniffer:main'
 
 [project.urls]
 github='https://github.com/snhobbs/ModbusSniffer'
